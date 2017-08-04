@@ -14,7 +14,13 @@ def getdate():
 	
 
 def usda(food):
+	
 	key = keys.APP_KEY
+	try:
+		key
+	else:
+		raise ValueError: print("API KEY not found. You need to generate one here: link.to.api.key.generator.com")
+	
 	param1 = {"api_key": key, "q": food, "ds": "Standard Reference", "max": "5", "format": "json"}
 	search = requests.get("https://api.nal.usda.gov/ndb/search", params = param1)
 	names = []
