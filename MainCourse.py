@@ -2,7 +2,7 @@
 #cd C:\Users\John\Google Drive\TAMU\MealFind
 
 import time
-import numpy as npy
+import numpy as np
 import requests
 import json
 import csv
@@ -135,7 +135,7 @@ def ask():
 	full = []
 	for m in range(0,len(meals)):
 		eaten = input(meals[m] + ": ").split()
-		hold = npy.array(eaten)
+		hold = np.array(eaten)
 		
 		hnew = parsemeal(hold)
 		for q in range(0,len(hnew)):
@@ -152,29 +152,65 @@ if __name__ == "__main__":
 	
 	
 	stat = {}
-
+	names = []
 	p = 1
 	for h in range(0,len(foods)):
 		just_in = usda(foods[h])
 		new = just_in[0]
 		name = just_in[1]
+		names.append(name)
 		method = just_in[2]
-		if method == 1:
-			if not name  in stat:
-				name = name
-			else:
-				name += str(p)
-				p += 1
-	
-			stat[name] = {new[0][0]: [new[1][0], new[2][0]]}
-	
-			for b in range(1,len(new[0])):
-				stat[name][new[0][b]] = [new[1][b], new[2][b]]
-		elif method == 2:
-			print("web scrape")
+		
+		if not name  in stat:
+			name = name
 		else:
-			print("Error: Something has gone wrong!:")
-			break
+			name += str(p)
+			p += 1
+	
+		stat[name] = {new[0][0]: [new[1][0], new[2][0]]}
+	
+		for b in range(1,len(new[0])):
+			stat[name][new[0][b]] = [new[1][b], new[2][b]]
+
+	
+#********************************************************************************************************************	
+#instead of writing everything to one file, make a file that has the nutrition info for unique foods. Update whenever
+#a new food is found. Then make a separate file of just the foods eaten that day
+#********************************************************************************************************************	
+
+	import os.path
+	safestat = stat.copy()
+	names = np.array(names)
+	filename = 'foodData.csv'
+	if os.path.isfile(filename):
+		currentInfo = pd.read_csv(filename,encoding = "ISO-8859-1")
+		currentNames = currentInfo.iloc[:,0]
+		for j in range(0,len(currentNames)):
+			remove = names[names == currentNames[j]]
+			for r in range(0,len(remove)):
+				del safestat[remove[r]]
+		newInfo = pd.DataFrame(safestat)
+		newInfo = pd.DataFrame.transpose(newInfo)
+		newInfo = newInfo.fillna(0)
+		newInfo.to_csv(path_or_buf = filename,mode = 'a',header=False)
+	else:
+		newInfo = pd.DataFrame(stat)
+		newInfo = pd.DataFrame.transpose(newInfo)
+		newInfo = newInfo.fillna(0)
+		newInfo.to_csv(path_or_buf = filename,mode = 'w')
+		
+	filename2 = 'foodLog.csv'
+	if os.path.isfile(filename2):
+		mode = 'a'
+	else:
+		mode = 'w'
+	
+	with open(filename2, mode, newline='') as csvfile:
+		daywriter = csv.writer(csvfile, delimiter=' ')
+		daywriter.writerow(getdate())
+		spamwriter = csv.writer(csvfile, delimiter = ',')
+		for f in range(0,len(names)):
+			spamwriter.writerow([names[f]])
 	
 	# data = pd.DataFrame(stat)
 	# data = pd.DataFrame.transpose(data)
@@ -201,5 +237,5 @@ if __name__ == "__main__":
 		
 		#---------------------------------------------------
 	#Sum macros from each food
-\
+
 	
