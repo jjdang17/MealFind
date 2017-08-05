@@ -7,6 +7,7 @@ import requests
 import json
 import csv
 import keys
+import pandas as pd
 
 def getdate():
 	## 12 hour format ##
@@ -15,11 +16,12 @@ def getdate():
 
 def usda(food):
 	
-	key = keys.APP_KEY
+	
 	try:
-		key
-	else:
-		raise ValueError: print("API KEY not found. You need to generate one here: link.to.api.key.generator.com")
+		key = keys.APP_KEY
+	except ValueError:
+		#raise ValueError: 
+		print("API KEY not found. You need to generate one here: link.to.api.key.generator.com")
 	
 	param1 = {"api_key": key, "q": food, "ds": "Standard Reference", "max": "5", "format": "json"}
 	search = requests.get("https://api.nal.usda.gov/ndb/search", params = param1)
@@ -44,7 +46,7 @@ def usda(food):
 		print(report.url)
 		if report.status_code == 200:
 			reportData = json.loads(report.content)
-			print (reportData)
+			
 			nutrientNum = len(reportData['report']['food']['nutrients'])
 			name = []
 			unit = []
@@ -53,13 +55,14 @@ def usda(food):
 				name.append(reportData['report']['food']['nutrients'][y]['name'])
 				value.append(reportData['report']['food']['nutrients'][y]['value'])
 				unit.append(reportData['report']['food']['nutrients'][y]['unit'])
+				
 			d = [name, unit, value]	
 		else:
 			print("Error!")
 			print(report.text)
 	else:
 		print("Error!")
-	return d
+	return (d,names[int(answer)])
 		
 def parsemeal(hold):
 	hnew = []
@@ -137,53 +140,86 @@ if __name__ == "__main__":
 	foods = ask()
 	
 	#access database info
-	lists = []
+	
+	stat = {}
+
+	p = 1
 	for h in range(0,len(foods)):
-		list = usda(foods[h])
-		if h == 0:
-			lists = list
+		just_in = usda(foods[h])
+		new = just_in[0]
+		name = just_in[1]
+		if not name  in stat:
+			name = name
 		else:
-			for j in range(0,len(list[0])):
-				lists[0].append(list[0][j])
-				lists[1].append(list[1][j])
-				lists[2].append(list[2][j])
-	print(lists)
-	
-	import os.path
-	 
-	filename = 'foodData.csv'
-	
-	if os.path.isfile(filename):
-		mode = 'a'
-	else:
-		mode = 'w'
-	val = []
-	counter = 0
-	for u in range(0,len(foods)):
-		lister = []
-		lister = lists[2][counter:counter+31]
-		counter += 32
-		lister.append(foods[u])
-		lister = lister[-1:] + lister[:-1]
-		val.append(lister)
-	
-	names = list[0]
-	names.append(" ")
-	names = names[-1:] + names[:-1]
-	units = list[1]
-	units.append(" ")
-	units = units[-1:] + units[:-1]
-	
-	with open(filename, mode, newline='') as csvfile:
-		daywriter = csv.writer(csvfile, delimiter=' ')
-		daywriter.writerow(getdate())
-		spamwriter = csv.writer(csvfile, delimiter = ',')
-		spamwriter.writerow(names)
-		spamwriter.writerow(units)
+			name += str(p)
+			p += 1
 		
-		for y in range(0,len(foods)):
-			spamwriter.writerow(val[y])
-	csvfile.close()	
+		stat[name] = {new[0][0]: [new[1][0], new[2][0]]}
+		
+		for b in range(1,len(new[0])):
+			stat[name][new[0][b]] = [new[1][b], new[2][b]]
+	data = pd.DataFrame(stat)
+	data = pd.DataFrame.transpose(data)
+	data = data.fillna(0)
+	print(data)
+	
+		# if h == 0:
+			# lists = list
+		# else:
+			# for j in range(0,len(list[0])):
+				# lists[0].append(list[0][j])
+				# lists[1].append(list[1][j])
+				# lists[2].append(list[2][j])
+	
+	
+	
+	# lists = []
+	# for h in range(0,len(foods)):
+		# list = usda(foods[h])
+		# if h == 0:
+			# lists = list
+		# else:
+			# for j in range(0,len(list[0])):
+				# lists[0].append(list[0][j])
+				# lists[1].append(list[1][j])
+				# lists[2].append(list[2][j])
+	# print(lists)
+	
+	# import os.path
+	 
+	# filename = 'foodData.csv'
+	
+	# if os.path.isfile(filename):
+		# mode = 'a'
+	# else:
+		# mode = 'w'
+	# val = []
+	# counter = 0
+	# for u in range(0,len(foods)):
+		# lister = []
+		# lister = lists[2][counter:counter+31]
+		# counter += 32
+		# lister.append(foods[u])
+		# lister = lister[-1:] + lister[:-1]
+		# val.append(lister)
+	
+	# names = list[0]
+	# names.append(" ")
+	# names = names[-1:] + names[:-1]
+	# units = list[1]
+	# units.append(" ")
+	# units = units[-1:] + units[:-1]
+	
+	# with open(filename, mode, newline='') as csvfile:
+		# daywriter = csv.writer(csvfile, delimiter=' ')
+		# daywriter.writerow(getdate())
+		# spamwriter = csv.writer(csvfile, delimiter = ',')
+		# spamwriter.writerow(names)
+		# spamwriter.writerow(units)
+		
+		# for y in range(0,len(foods)):
+			# spamwriter.writerow(val[y])
+	# csvfile.close()	
 	
 	#---------------------------------------------------
 
