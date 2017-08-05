@@ -29,40 +29,49 @@ def usda(food):
 	ndbno = []	
 	if search.status_code == 200:
 		
-		
-		data = json.loads(search.content)
-		for a in range(0,len(data['list']['item'])):
-			names.append(data['list']['item'][a]['name'])
-			ndbno.append(data['list']['item'][a]['ndbno'])
-		print("Which of these did you eat?")
-		for b in range(0,len(names)):
-			print(str(b) + " " + names[b] )
-		answer = input("number: ")
-		#ndbno for chosen food
-		foodID = []
-		foodID.append(ndbno[int(answer)])
-		param2 = {"ndbno": ",".join(foodID), "type": "b", "format": "json","api_key": key}
-		report = requests.get("https://api.nal.usda.gov/ndb/reports/", params = param2)
-		print(report.url)
-		if report.status_code == 200:
-			reportData = json.loads(report.content)
+		try:
+			data = json.loads(search.content)
+			for a in range(0,len(data['list']['item'])):
+				names.append(data['list']['item'][a]['name'])
+				ndbno.append(data['list']['item'][a]['ndbno'])
+			print("Which of these did you eat?")
+			for b in range(0,len(names)):
+				print(str(b) + " " + names[b] )
+			answer = input("number: ")
+			#ndbno for chosen food
+			foodID = []
+			foodID.append(ndbno[int(answer)])
+			param2 = {"ndbno": ",".join(foodID), "type": "b", "format": "json","api_key": key}
+			report = requests.get("https://api.nal.usda.gov/ndb/reports/", params = param2)
+			print(report.url)
+			if report.status_code == 200:
+				reportData = json.loads(report.content)
 			
-			nutrientNum = len(reportData['report']['food']['nutrients'])
-			name = []
-			unit = []
-			value = []
-			for y in range(0,nutrientNum):
-				name.append(reportData['report']['food']['nutrients'][y]['name'])
-				value.append(reportData['report']['food']['nutrients'][y]['value'])
-				unit.append(reportData['report']['food']['nutrients'][y]['unit'])
+				nutrientNum = len(reportData['report']['food']['nutrients'])
+				name = []
+				unit = []
+				value = []
+				for y in range(0,nutrientNum):
+					name.append(reportData['report']['food']['nutrients'][y]['name'])
+					value.append(reportData['report']['food']['nutrients'][y]['value'])
+					unit.append(reportData['report']['food']['nutrients'][y]['unit'])
 				
-			d = [name, unit, value]	
-		else:
-			print("Error!")
-			print(report.text)
+				d = [name, unit, value]	
+				fn = names[int(answer)]
+				method = 1
+			else:
+				print("Error!")
+				print(report.text)
+				method = 0
+		except:
+			print("Unable to find, going to try webscraping.")
+			d = ['name','unit','value']
+			fn = 'scrape'
+			method = 2
 	else:
 		print("Error!")
-	return (d,names[int(answer)])
+		method = 0
+	return (d, fn, method)
 		
 def parsemeal(hold):
 	hnew = []
@@ -141,6 +150,7 @@ if __name__ == "__main__":
 	
 	#access database info
 	
+	
 	stat = {}
 
 	p = 1
@@ -148,78 +158,41 @@ if __name__ == "__main__":
 		just_in = usda(foods[h])
 		new = just_in[0]
 		name = just_in[1]
-		if not name  in stat:
-			name = name
+		method = just_in[2]
+		if method == 1:
+			if not name  in stat:
+				name = name
+			else:
+				name += str(p)
+				p += 1
+	
+			stat[name] = {new[0][0]: [new[1][0], new[2][0]]}
+	
+			for b in range(1,len(new[0])):
+				stat[name][new[0][b]] = [new[1][b], new[2][b]]
+		elif method == 2:
+			print("web scrape")
 		else:
-			name += str(p)
-			p += 1
-		
-		stat[name] = {new[0][0]: [new[1][0], new[2][0]]}
-		
-		for b in range(1,len(new[0])):
-			stat[name][new[0][b]] = [new[1][b], new[2][b]]
-	data = pd.DataFrame(stat)
-	data = pd.DataFrame.transpose(data)
-	data = data.fillna(0)
-	print(data)
+			print("Error: Something has gone wrong!:")
+			break
 	
-		# if h == 0:
-			# lists = list
-		# else:
-			# for j in range(0,len(list[0])):
-				# lists[0].append(list[0][j])
-				# lists[1].append(list[1][j])
-				# lists[2].append(list[2][j])
+	# data = pd.DataFrame(stat)
+	# data = pd.DataFrame.transpose(data)
+	# data = data.fillna(0)
+	# print(data)
 	
 	
-	
-	# lists = []
-	# for h in range(0,len(foods)):
-		# list = usda(foods[h])
-		# if h == 0:
-			# lists = list
-		# else:
-			# for j in range(0,len(list[0])):
-				# lists[0].append(list[0][j])
-				# lists[1].append(list[1][j])
-				# lists[2].append(list[2][j])
-	# print(lists)
-	
+	# # Make sure the file exists and if not, make one	
 	# import os.path
 	 
 	# filename = 'foodData.csv'
 	
 	# if os.path.isfile(filename):
-		# mode = 'a'
+		# mo = 'a'
 	# else:
-		# mode = 'w'
-	# val = []
-	# counter = 0
-	# for u in range(0,len(foods)):
-		# lister = []
-		# lister = lists[2][counter:counter+31]
-		# counter += 32
-		# lister.append(foods[u])
-		# lister = lister[-1:] + lister[:-1]
-		# val.append(lister)
-	
-	# names = list[0]
-	# names.append(" ")
-	# names = names[-1:] + names[:-1]
-	# units = list[1]
-	# units.append(" ")
-	# units = units[-1:] + units[:-1]
-	
-	# with open(filename, mode, newline='') as csvfile:
-		# daywriter = csv.writer(csvfile, delimiter=' ')
-		# daywriter.writerow(getdate())
-		# spamwriter = csv.writer(csvfile, delimiter = ',')
-		# spamwriter.writerow(names)
-		# spamwriter.writerow(units)
-		
-		# for y in range(0,len(foods)):
-			# spamwriter.writerow(val[y])
-	# csvfile.close()	
+		# mo = 'w'
+# #	Append new data to .csv file
+	# data.to_csv(path_or_buf = filename,mode = mo)		
 	
 	#---------------------------------------------------
 
@@ -228,8 +201,5 @@ if __name__ == "__main__":
 		
 		#---------------------------------------------------
 	#Sum macros from each food
+\
 	
-	#Access file with user info
-	
-	#Organize and send to csv file
-	#with open('eggs.csv', 'wb') as csvfile:
