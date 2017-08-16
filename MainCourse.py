@@ -11,7 +11,7 @@ import pandas as pd
 
 def getdate():
 	## 12 hour format ##
-	return time.strftime("%d/%m/%Y")
+	return time.strftime("%m/%d/%Y")
 	
 
 def usda(food):
