@@ -9,9 +9,13 @@ import csv
 import keys
 import pandas as pd
 
+
+
+
 def getdate():
 	## 12 hour format ##
-	return time.strftime("%m/%d/%Y")
+	date = '#' + time.strftime("%m/%d/%Y")
+	return date
 	
 
 def usda(food):
@@ -177,12 +181,14 @@ if __name__ == "__main__":
 #instead of writing everything to one file, make a file that has the nutrition info for unique foods. Update whenever
 #a new food is found. Then make a separate file of just the foods eaten that day
 #********************************************************************************************************************	
-
+	#Check if files exists
 	import os.path
 	safestat = stat.copy()
 	names = np.array(names)
 	filename = 'foodData.csv'
+	
 	if os.path.isfile(filename):
+		#File exists, append to it
 		currentInfo = pd.read_csv(filename,encoding = "ISO-8859-1")
 		currentNames = currentInfo.iloc[:,0]
 		for j in range(0,len(currentNames)):
@@ -194,15 +200,19 @@ if __name__ == "__main__":
 		newInfo = newInfo.fillna(0)
 		newInfo.to_csv(path_or_buf = filename,mode = 'a',header=False)
 	else:
+		#File does not exist, let's make one!
 		newInfo = pd.DataFrame(stat)
 		newInfo = pd.DataFrame.transpose(newInfo)
 		newInfo = newInfo.fillna(0)
 		newInfo.to_csv(path_or_buf = filename,mode = 'w')
-		
+	
+	#Check if file exists
 	filename2 = 'foodLog.csv'
 	if os.path.isfile(filename2):
+	#File exists, append to it
 		mode = 'a'
 	else:
+	#File does not exist, let's make one!
 		mode = 'w'
 	
 	with open(filename2, mode, newline='') as csvfile:
@@ -211,6 +221,8 @@ if __name__ == "__main__":
 		spamwriter = csv.writer(csvfile, delimiter = ',')
 		for f in range(0,len(names)):
 			spamwriter.writerow([names[f]])
+	
+	
 	
 	# data = pd.DataFrame(stat)
 	# data = pd.DataFrame.transpose(data)
